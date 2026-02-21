@@ -42,11 +42,11 @@ export function GitHubCodeBlock({ url }: GitHubCodeBlockProps) {
   }
 
   return (
-    <div className="rounded-lg border border-code-border bg-code-bg overflow-hidden animate-fade-in">
-      {/* Header - GitHub style */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-code-border bg-secondary/50">
+    <div className="rounded-xl border border-code-border bg-code-bg overflow-hidden animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-code-border bg-secondary/30">
         <div className="flex items-center gap-2 min-w-0">
-          <FileCode className="w-4 h-4 text-muted-foreground shrink-0" />
+          <FileCode className="w-4 h-4 text-primary shrink-0" />
           <a
             href={permalink.fileUrl}
             target="_blank"
@@ -55,21 +55,21 @@ export function GitHubCodeBlock({ url }: GitHubCodeBlockProps) {
           >
             {permalink.owner}/{permalink.repo}/{permalink.filePath}
           </a>
-          <span className="text-xs text-muted-foreground shrink-0">
+          <span className="text-[11px] text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded-md font-mono">
             L{permalink.startLine}
             {permalink.endLine !== permalink.startLine && `-L${permalink.endLine}`}
           </span>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 shrink-0">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 rounded hover:bg-muted text-muted-foreground text-xs"
+            className="px-2 py-1 rounded-lg hover:bg-muted text-muted-foreground text-[11px] font-medium transition-colors"
           >
             {expanded ? "Collapse" : "Expand"}
           </button>
           <button
             onClick={copyCode}
-            className="p-1 rounded hover:bg-muted text-muted-foreground"
+            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
             title="Copy code"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
@@ -78,7 +78,7 @@ export function GitHubCodeBlock({ url }: GitHubCodeBlockProps) {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1 rounded hover:bg-muted text-muted-foreground"
+            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
             title="View on GitHub"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -96,7 +96,7 @@ export function GitHubCodeBlock({ url }: GitHubCodeBlockProps) {
               <tbody>
                 {lines.map((line, i) => (
                   <tr key={i} className="hover:bg-code-highlight transition-colors">
-                    <td className="select-none text-right pr-3 pl-3 py-0 text-code-line-number w-[1%] whitespace-nowrap">
+                    <td className="select-none text-right pr-3 pl-4 py-0 text-code-line-number w-[1%] whitespace-nowrap">
                       {permalink.startLine + i}
                     </td>
                     <td className="pr-4 py-0 whitespace-pre">{line}</td>

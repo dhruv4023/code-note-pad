@@ -51,8 +51,8 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold">{note ? "Edit Note" : "New Note"}</h2>
-        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={onCancel}>
+        <h2 className="text-base font-bold">{note ? "Edit Note" : "New Note"}</h2>
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-primary/10" onClick={onCancel}>
           <X className="w-4 h-4" />
         </Button>
       </div>
@@ -61,7 +61,7 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
         placeholder="Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="bg-secondary/50 border-border"
+        className="bg-secondary/30 border-border/50 rounded-xl h-11"
         required
       />
 
@@ -70,17 +70,17 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
         value={body}
         onChange={(e) => setBody(e.target.value)}
         rows={4}
-        className="bg-secondary/50 border-border resize-none"
+        className="bg-secondary/30 border-border/50 rounded-xl resize-none"
       />
 
       <div className="space-y-2">
         <div className="relative">
-          <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Link className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="GitHub permanent link (e.g. https://github.com/...#L1-L10)"
             value={permanentLink}
             onChange={(e) => setPermanentLink(e.target.value)}
-            className="pl-9 bg-secondary/50 border-border font-mono text-xs"
+            className="pl-10 bg-secondary/30 border-border/50 rounded-xl font-mono text-xs"
           />
         </div>
 
@@ -104,9 +104,9 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
                 addTag();
               }
             }}
-            className="bg-secondary/50 border-border text-sm"
+            className="bg-secondary/30 border-border/50 rounded-xl text-sm"
           />
-          <Button type="button" variant="secondary" size="sm" onClick={addTag} className="shrink-0">
+          <Button type="button" variant="secondary" size="sm" onClick={addTag} className="shrink-0 rounded-xl">
             <Plus className="w-3.5 h-3.5 mr-1" />
             Tag
           </Button>
@@ -116,10 +116,10 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-tag-bg text-tag-foreground"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-tag-bg text-tag-foreground"
               >
                 {tag}
-                <button type="button" onClick={() => removeTag(tag)} className="hover:text-destructive">
+                <button type="button" onClick={() => removeTag(tag)} className="hover:text-destructive transition-colors">
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -129,10 +129,10 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button type="submit" disabled={saving || !title.trim()} className="flex-1">
+        <Button type="submit" disabled={saving || !title.trim()} className="flex-1 rounded-xl glow-sm h-11 font-semibold">
           {saving ? "Saving..." : note ? "Update Note" : "Add Note"}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl h-11">
           Cancel
         </Button>
       </div>
