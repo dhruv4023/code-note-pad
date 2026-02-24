@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
 async function getToken(): Promise<string | null> {
   return storage.get("authToken");

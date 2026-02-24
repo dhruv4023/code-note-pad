@@ -12,10 +12,10 @@ interface NoteCardProps {
 
 export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
   return (
-    <div className="group rounded-2xl border border-border/50 glass p-5 space-y-3 animate-fade-in hover:glow-sm hover:border-primary/30 transition-all duration-300">
+    <div className="group rounded-2xl glass p-5 space-y-3 animate-fade-in hover:glow-sm hover:border-primary/30 transition-all duration-300">
       {/* Title & actions */}
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-semibold text-sm leading-snug">{note.title}</h3>
+        <h3 className="font-semibold text-sm leading-snug"># {note.title}</h3>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary" onClick={() => onEdit(note)}>
             <Pencil className="w-3.5 h-3.5" />
