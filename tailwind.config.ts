@@ -71,6 +71,12 @@ export default {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
         },
+        cell: {
+          bg: "hsl(var(--cell-bg))",
+          border: "hsl(var(--cell-border))",
+          "active-border": "hsl(var(--cell-active-border))",
+          hover: "hsl(var(--cell-hover))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

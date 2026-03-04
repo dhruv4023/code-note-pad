@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { parseGitHubPermalink, fetchCodeFromPermalink, type GitHubPermalink } from "@/lib/github";
-import { ExternalLink, Copy, Check, FileCode } from "lucide-react";
+import { ExternalLink, Copy, Check, FileCode, ChevronDown, ChevronRight } from "lucide-react";
 
 interface GitHubCodeBlockProps {
   url: string;
@@ -35,53 +35,52 @@ export function GitHubCodeBlock({ url }: GitHubCodeBlockProps) {
 
   if (!permalink) {
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">
+      <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all text-xs">
         {url}
       </a>
     );
   }
 
   return (
-    <div className="rounded-xl border border-code-border bg-code-bg overflow-hidden animate-fade-in">
+    <div className="rounded-md border border-code-border bg-code-bg overflow-hidden text-xs">
       {/* Header */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-code-border bg-secondary/30">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-code-border bg-muted/30">
         <div className="flex items-center gap-2 min-w-0">
-          <FileCode className="w-4 h-4 text-primary shrink-0" />
+          <FileCode className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           <a
             href={permalink.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-mono text-primary hover:underline truncate"
+            className="text-[11px] font-mono text-primary hover:underline truncate"
           >
-            {permalink.owner}/{permalink.repo}/{permalink.filePath}
+            {permalink.filePath}
           </a>
-          <span className="text-[11px] text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded-md font-mono">
-            L{permalink.startLine}
-            {permalink.endLine !== permalink.startLine && `-L${permalink.endLine}`}
+          <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
+            L{permalink.startLine}{permalink.endLine !== permalink.startLine && `-${permalink.endLine}`}
           </span>
         </div>
         <div className="flex items-center gap-0.5 shrink-0">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="px-2 py-1 rounded-lg hover:bg-muted text-muted-foreground text-[11px] font-medium transition-colors"
+            className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
           >
-            {expanded ? "Collapse" : "Expand"}
+            {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
           </button>
           <button
             onClick={copyCode}
-            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+            className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
             title="Copy code"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
           </button>
           <a
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+            className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
             title="View on GitHub"
           >
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-3 h-3" />
           </a>
         </div>
       </div>
@@ -90,16 +89,16 @@ export function GitHubCodeBlock({ url }: GitHubCodeBlockProps) {
       {expanded && (
         <div className="overflow-x-auto scrollbar-thin">
           {loading ? (
-            <div className="p-4 text-sm text-muted-foreground animate-pulse">Loading code...</div>
+            <div className="p-3 text-muted-foreground animate-pulse">Loading code...</div>
           ) : (
-            <table className="w-full text-xs font-mono leading-relaxed">
+            <table className="w-full font-mono leading-5">
               <tbody>
                 {lines.map((line, i) => (
                   <tr key={i} className="hover:bg-code-highlight transition-colors">
-                    <td className="select-none text-right pr-3 pl-4 py-0 text-code-line-number w-[1%] whitespace-nowrap">
+                    <td className="select-none text-right pr-3 pl-3 py-0 text-code-line-number w-[1%] whitespace-nowrap text-[11px]">
                       {permalink.startLine + i}
                     </td>
-                    <td className="pr-4 py-0 whitespace-pre">{line}</td>
+                    <td className="pr-3 py-0 whitespace-pre text-[11px]">{line}</td>
                   </tr>
                 ))}
               </tbody>

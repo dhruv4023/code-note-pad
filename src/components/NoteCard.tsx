@@ -1,62 +1,84 @@
+import { useState } from "react";
 import { type CodeNote } from "@/lib/api";
 import { GitHubCodeBlock } from "./GitHubCodeBlock";
 import { isGitHubPermalink } from "@/lib/github";
-import { Pencil, Trash2, Tag } from "lucide-react";
+import { Pencil, Trash2, Play, MoreHorizontal, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NoteCardProps {
   note: CodeNote;
+  index: number;
   onEdit: (note: CodeNote) => void;
   onDelete: (id: number) => void;
 }
 
-export function NoteCard({ note, onEdit, onDelete }: NoteCardProps) {
+export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
+  const [collapsed, setCollapsed] = useState(false);
+  const hasCode = note.permanentLink && isGitHubPermalink(note.permanentLink);
+
   return (
-    <div className="group rounded-2xl glass p-5 space-y-3 animate-fade-in hover:glow-sm hover:border-primary/30 transition-all duration-300">
-      {/* Title & actions */}
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="font-semibold text-sm leading-snug"># {note.title}</h3>
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-primary/10 hover:text-primary" onClick={() => onEdit(note)}>
-            <Pencil className="w-3.5 h-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(note.id)}>
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
-        </div>
+    <div className="group cell rounded-lg animate-fade-in hover:shadow-sm">
+      {/* Cell toolbar - appears on hover */}
+      <div className="flex items-center gap-1 px-2 py-1 border-b border-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Button variant="ghost" size="icon" className="h-6 w-6 rounded hover:bg-muted" onClick={() => onEdit(note)}>
+          <Pencil className="w-3 h-3" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-6 w-6 rounded hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(note.id)}>
+          <Trash2 className="w-3 h-3" />
+        </Button>
+        <div className="flex-1" />
+        <Button variant="ghost" size="icon" className="h-6 w-6 rounded hover:bg-muted" onClick={() => setCollapsed(!collapsed)}>
+          {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        </Button>
       </div>
 
-      {/* Note text */}
-      {note.note && (
-        <p className="text-sm text-muted-foreground leading-relaxed">{note.note}</p>
-      )}
+      {!collapsed && (
+        <div className="flex">
+          {/* Execution count gutter */}
+          <div className="flex-shrink-0 w-14 flex items-start justify-end pr-2 pt-3">
+            <span className="execution-count select-none">[{index + 1}]:</span>
+          </div>
 
-      {/* Code block if permalink */}
-      {note.permanentLink && isGitHubPermalink(note.permanentLink) && (
-        <GitHubCodeBlock url={note.permanentLink} />
-      )}
+          {/* Cell content */}
+          <div className="flex-1 py-3 pr-4 space-y-2 min-w-0">
+            {/* Title as markdown heading */}
+            <h3 className="font-semibold text-sm leading-snug">{note.title}</h3>
 
-      {/* Non-GitHub link */}
-      {note.permanentLink && !isGitHubPermalink(note.permanentLink) && (
-        <a
-          href={note.permanentLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-primary hover:underline break-all"
-        >
-          {note.permanentLink}
-        </a>
-      )}
+            {/* Note text as paragraph */}
+            {note.note && (
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{note.note}</p>
+            )}
 
-      {/* Tags */}
-      {note.aiTags && note.aiTags.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap pt-1">
-          <Tag className="w-3 h-3 text-muted-foreground" />
-          {note.aiTags.map((tag) => (
-            <span key={tag} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-tag-bg text-tag-foreground">
-              {tag}
-            </span>
-          ))}
+            {/* Code block if permalink */}
+            {hasCode && (
+              <div className="mt-2">
+                <GitHubCodeBlock url={note.permanentLink!} />
+              </div>
+            )}
+
+            {/* Non-GitHub link */}
+            {note.permanentLink && !hasCode && (
+              <a
+                href={note.permanentLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary hover:underline break-all inline-block"
+              >
+                🔗 {note.permanentLink}
+              </a>
+            )}
+
+            {/* Tags as badges */}
+            {note.aiTags && note.aiTags.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap pt-1">
+                {note.aiTags.map((tag) => (
+                  <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-tag-bg text-tag-foreground font-mono">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
