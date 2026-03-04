@@ -4,7 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { NoteCard } from "@/components/NoteCard";
 import { NoteEditor } from "@/components/NoteEditor";
 import { getAllNotes, addNote, updateNote, deleteNote, type CodeNote } from "@/lib/api";
-import { Plus, Search, FileCode, Loader2, Sparkles } from "lucide-react";
+import { Plus, Search, BookOpen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -41,10 +41,10 @@ export default function Index() {
     try {
       if (editing) {
         await updateNote(editing.id, data);
-        toast.success("Note updated");
+        toast.success("Cell updated");
       } else {
         await addNote(data);
-        toast.success("Note added");
+        toast.success("Cell added");
       }
       setShowEditor(false);
       setEditing(null);
@@ -57,10 +57,10 @@ export default function Index() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this note?")) return;
+    if (!confirm("Delete this cell?")) return;
     try {
       await deleteNote(id);
-      toast.success("Note deleted");
+      toast.success("Cell deleted");
       fetchNotes();
     } catch (err: any) {
       toast.error("Failed to delete");
@@ -72,6 +72,11 @@ export default function Index() {
     setShowEditor(true);
   };
 
+  const openNewNote = () => {
+    setEditing(null);
+    setShowEditor(true);
+  };
+
   const filteredNotes = notes.filter(
     (n) =>
       n.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -80,39 +85,35 @@ export default function Index() {
   );
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Background effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/3 blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-accent/3 blur-[100px]" />
-      </div>
+    <div className="min-h-screen bg-background">
+      <AppHeader onNewNote={openNewNote} />
 
-      <AppHeader />
-
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6 relative z-10">
-        {/* Toolbar */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      {/* Notebook title bar */}
+      <div className="border-b border-border">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <BookOpen className="w-4 h-4 text-primary shrink-0" />
+            <h2 className="text-sm font-medium truncate">notebook.codePad</h2>
+            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
+              {notes.length} cells
+            </span>
+          </div>
+          <div className="relative w-60">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search notes, tags..."
+              placeholder="Search cells..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-11 bg-card/60 border-border/50 rounded-xl glass"
+              className="pl-8 h-8 text-xs bg-muted/50 border-border rounded-md"
             />
           </div>
-          <Button
-            onClick={() => { setEditing(null); setShowEditor(true); }}
-            className="shrink-0 h-11 rounded-xl glow-sm font-semibold px-5"
-          >
-            <Plus className="w-4 h-4 mr-1.5" />
-            New Note
-          </Button>
         </div>
+      </div>
 
-        {/* Editor panel */}
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-2">
+        {/* Editor as first cell */}
         {showEditor && (
-          <div className="rounded-2xl border border-border/50 glass p-6 glow-sm">
+          <div className="mb-2">
             <NoteEditor
               note={editing}
               onSave={handleSave}
@@ -122,45 +123,69 @@ export default function Index() {
           </div>
         )}
 
-        {/* Notes list */}
+        {/* Notes as cells */}
         {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-7 h-7 animate-spin text-primary" />
-              <span className="text-sm text-muted-foreground">Loading notes...</span>
+          <div className="flex items-center justify-center py-20">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Loading cells...</span>
             </div>
           </div>
         ) : filteredNotes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 space-y-4 text-muted-foreground">
-            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <FileCode className="w-10 h-10 text-primary/40" />
-            </div>
-            <div className="text-center space-y-1">
-              <p className="text-base font-medium text-foreground/70">
-                {notes.length === 0 ? "No notes yet" : "No matching notes"}
-              </p>
-              <p className="text-sm flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                {notes.length === 0 ? "Create your first code note!" : "Try a different search."}
-              </p>
+          <div className="cell rounded-lg">
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center mx-auto">
+                  <BookOpen className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">
+                    {notes.length === 0 ? "Empty notebook" : "No matching cells"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {notes.length === 0 ? "Click '+ Cell' to add your first note" : "Try a different search query"}
+                  </p>
+                </div>
+                {notes.length === 0 && (
+                  <Button size="sm" variant="outline" onClick={openNewNote} className="h-7 text-xs rounded">
+                    <Plus className="w-3 h-3 mr-1" />
+                    Add Cell
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {filteredNotes.map((note) => (
-              <NoteCard key={note.id} note={note} onEdit={handleEdit} onDelete={handleDelete} />
+          <div className="space-y-2">
+            {filteredNotes.map((note, i) => (
+              <NoteCard key={note.id} note={note} index={i} onEdit={handleEdit} onDelete={handleDelete} />
             ))}
+          </div>
+        )}
+
+        {/* Add cell button between cells */}
+        {!showEditor && filteredNotes.length > 0 && (
+          <div className="flex justify-center py-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={openNewNote}
+              className="h-7 px-3 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-md gap-1"
+            >
+              <Plus className="w-3 h-3" />
+              Add Cell
+            </Button>
           </div>
         )}
 
         {/* Pagination */}
         {notes.length > 0 && (
-          <div className="flex items-center justify-center gap-3 pt-4">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="rounded-xl">
+          <div className="flex items-center justify-center gap-2 pt-4 border-t border-border/50">
+            <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="h-7 text-xs rounded">
               Previous
             </Button>
-            <span className="text-sm text-muted-foreground px-3 font-medium">Page {page}</span>
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} className="rounded-xl">
+            <span className="text-xs text-muted-foreground font-mono">Page {page}</span>
+            <Button variant="ghost" size="sm" onClick={() => setPage((p) => p + 1)} className="h-7 text-xs rounded">
               Next
             </Button>
           </div>

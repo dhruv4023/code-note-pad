@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Braces, ArrowRight, Sparkles } from "lucide-react";
+import { BookOpen, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -45,37 +45,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full bg-accent/5 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/3 blur-[100px]" />
-      </div>
-
-      <div className="w-full max-w-sm space-y-8 animate-fade-in relative z-10">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-sm space-y-6 animate-fade-in">
         {/* Logo */}
-        <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-primary glow flex items-center justify-center mx-auto">
-            <Braces className="w-8 h-8 text-primary-foreground" />
+        <div className="text-center space-y-2">
+          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mx-auto">
+            <BookOpen className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight glow-text">CodePad</h1>
-            <p className="text-sm text-muted-foreground mt-1 flex items-center justify-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              {isSignup ? "Create your account" : "Sign in to your notes"}
+            <h1 className="text-xl font-semibold tracking-tight">CodePad</h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isSignup ? "Create your account" : "Sign in to your notebook"}
             </p>
           </div>
         </div>
 
         {/* Form */}
-        <div className="rounded-2xl border border-border/50 glass p-6 glow-sm">
-          <form onSubmit={isSignup ? handleSignup : handleLogin} className="space-y-4">
+        <div className="cell rounded-lg p-5">
+          <form onSubmit={isSignup ? handleSignup : handleLogin} className="space-y-3">
             <Input
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="h-12 bg-secondary/50 border-border/50 rounded-xl focus:ring-primary/30"
+              className="h-9 text-sm rounded-md"
               required
             />
             {isSignup ? (
@@ -84,7 +76,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 bg-secondary/50 border-border/50 rounded-xl"
+                className="h-9 text-sm rounded-md"
                 required
               />
             ) : (
@@ -93,20 +85,20 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-12 bg-secondary/50 border-border/50 rounded-xl"
+                className="h-9 text-sm rounded-md"
                 required
               />
             )}
-            <Button type="submit" className="w-full h-12 rounded-xl glow-sm font-semibold text-sm" disabled={loading}>
+            <Button type="submit" className="w-full h-9 rounded-md text-xs font-medium" disabled={loading}>
               {loading ? "Please wait..." : isSignup ? "Create Account" : "Sign In"}
-              <ArrowRight className="w-4 h-4 ml-2" />
+              <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
             </Button>
           </form>
         </div>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-xs text-muted-foreground">
           {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
-          <button onClick={() => setIsSignup(!isSignup)} className="text-primary font-semibold hover:underline">
+          <button onClick={() => setIsSignup(!isSignup)} className="text-primary font-medium hover:underline">
             {isSignup ? "Sign in" : "Sign up"}
           </button>
         </p>
