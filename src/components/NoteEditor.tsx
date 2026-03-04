@@ -70,36 +70,29 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
             <span className="execution-count select-none">[*]:</span>
           </div>
 
-          {/* Editor content */}
-          <div className="flex-1 py-3 pr-4 space-y-3">
+          {/* Editor content — mirrors the 3-section output */}
+          <div className="flex-1 py-3 pr-4 space-y-4">
+            {/* Title */}
             <Input
               placeholder="# Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="border-0 bg-transparent px-0 h-8 text-sm font-semibold placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none border-b border-border/30 focus-visible:border-primary"
+              className="border-0 bg-transparent px-0 h-8 text-base font-semibold placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none border-b border-border/30 focus-visible:border-primary"
               required
             />
 
-            <Textarea
-              placeholder="Write your note... (supports multiline)"
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={3}
-              className="border-0 bg-transparent px-0 text-sm placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none min-h-[60px]"
-            />
-
-            {/* Link input */}
-            <div className="space-y-2">
+            {/* Section 1: GitHub Permlink */}
+            <div className="space-y-1.5">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">### GitHub Permlink</h4>
               <div className="flex items-center gap-2 rounded-md bg-muted/50 px-2.5 py-1.5">
                 <Link className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 <input
-                  placeholder="Paste GitHub permalink..."
+                  placeholder="https://github.com/owner/repo/blob/sha/file#L1-L10"
                   value={permanentLink}
                   onChange={(e) => setPermanentLink(e.target.value)}
                   className="flex-1 bg-transparent text-xs font-mono outline-none placeholder:text-muted-foreground/40"
                 />
               </div>
-
               {showPreview && (
                 <div className="pt-1">
                   <GitHubCodeBlock url={permanentLink} />
@@ -107,11 +100,12 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
               )}
             </div>
 
-            {/* Tags */}
-            <div className="space-y-2">
+            {/* Section 2: Tags */}
+            <div className="space-y-1.5">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">### Tags</h4>
               <div className="flex gap-2 items-center">
                 <input
-                  placeholder="Add tag..."
+                  placeholder="Add tag and press Enter..."
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -120,7 +114,7 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
                       addTag();
                     }
                   }}
-                  className="flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground/40 border-b border-border/30 py-1 focus:border-primary transition-colors"
+                  className="flex-1 bg-transparent text-xs font-mono outline-none placeholder:text-muted-foreground/40 border-b border-border/30 py-1 focus:border-primary transition-colors"
                 />
                 <Button type="button" variant="ghost" size="sm" onClick={addTag} className="h-6 px-2 text-xs rounded hover:bg-muted">
                   <Plus className="w-3 h-3 mr-1" />
@@ -128,20 +122,33 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
                 </Button>
               </div>
               {tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-tag-bg text-tag-foreground font-mono"
-                    >
-                      {tag}
-                      <button type="button" onClick={() => removeTag(tag)} className="hover:text-destructive transition-colors">
-                        <X className="w-2.5 h-2.5" />
-                      </button>
+                <p className="text-sm text-foreground/80 font-mono">
+                  {tags.map((tag, i) => (
+                    <span key={tag}>
+                      <span
+                        className="cursor-pointer hover:text-destructive transition-colors"
+                        onClick={() => removeTag(tag)}
+                        title="Click to remove"
+                      >
+                        {tag}
+                      </span>
+                      {i < tags.length - 1 && ", "}
                     </span>
                   ))}
-                </div>
+                </p>
               )}
+            </div>
+
+            {/* Section 3: Description */}
+            <div className="space-y-1.5">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">### Description</h4>
+              <Textarea
+                placeholder="Write a concise description here (3-6 lines)..."
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={4}
+                className="border-0 bg-transparent px-0 text-sm placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-none resize-none min-h-[80px]"
+              />
             </div>
 
             {/* Actions */}
