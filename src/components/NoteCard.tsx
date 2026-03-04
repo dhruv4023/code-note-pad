@@ -2,7 +2,7 @@ import { useState } from "react";
 import { type CodeNote } from "@/lib/api";
 import { GitHubCodeBlock } from "./GitHubCodeBlock";
 import { isGitHubPermalink } from "@/lib/github";
-import { Pencil, Trash2, Play, MoreHorizontal, ChevronDown, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NoteCardProps {
@@ -18,7 +18,7 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
 
   return (
     <div className="group cell rounded-lg animate-fade-in hover:shadow-sm">
-      {/* Cell toolbar - appears on hover */}
+      {/* Cell toolbar */}
       <div className="flex items-center gap-1 px-2 py-1 border-b border-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button variant="ghost" size="icon" className="h-6 w-6 rounded hover:bg-muted" onClick={() => onEdit(note)}>
           <Pencil className="w-3 h-3" />
@@ -39,43 +39,43 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
             <span className="execution-count select-none">[{index + 1}]:</span>
           </div>
 
-          {/* Cell content */}
-          <div className="flex-1 py-3 pr-4 space-y-2 min-w-0">
-            {/* Title as markdown heading */}
-            <h3 className="font-semibold text-sm leading-snug">{note.title}</h3>
+          {/* Cell content — Jupyter markdown cell style */}
+          <div className="flex-1 py-3 pr-4 space-y-4 min-w-0">
+            {/* Title */}
+            <h3 className="text-base font-semibold leading-snug">{note.title}</h3>
 
-            {/* Note text as paragraph */}
-            {note.note && (
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{note.note}</p>
-            )}
-
-            {/* Code block if permalink */}
-            {hasCode && (
-              <div className="mt-2">
-                <GitHubCodeBlock url={note.permanentLink!} />
+            {/* Section 1: GitHub Permlink */}
+            {note.permanentLink && (
+              <div className="space-y-1.5">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">### GitHub Permlink</h4>
+                {hasCode ? (
+                  <GitHubCodeBlock url={note.permanentLink} />
+                ) : (
+                  <a
+                    href={note.permanentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline break-all font-mono inline-block"
+                  >
+                    {note.permanentLink}
+                  </a>
+                )}
               </div>
             )}
 
-            {/* Non-GitHub link */}
-            {note.permanentLink && !hasCode && (
-              <a
-                href={note.permanentLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline break-all inline-block"
-              >
-                🔗 {note.permanentLink}
-              </a>
+            {/* Section 2: Tags */}
+            {note.aiTags && note.aiTags.length > 0 && (
+              <div className="space-y-1.5">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">### Tags</h4>
+                <p className="text-sm text-foreground/80 font-mono">{note.aiTags.join(", ")}</p>
+              </div>
             )}
 
-            {/* Tags as badges */}
-            {note.aiTags && note.aiTags.length > 0 && (
-              <div className="flex items-center gap-1 flex-wrap pt-1">
-                {note.aiTags.map((tag) => (
-                  <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-tag-bg text-tag-foreground font-mono">
-                    {tag}
-                  </span>
-                ))}
+            {/* Section 3: Description */}
+            {note.note && (
+              <div className="space-y-1.5">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">### Description</h4>
+                <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{note.note}</p>
               </div>
             )}
           </div>
