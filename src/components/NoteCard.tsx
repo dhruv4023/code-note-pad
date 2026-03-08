@@ -121,19 +121,16 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
                 ))}
               </div>
             )}
-
-            {/* Description */}
-            {note.note && (
-              <div className="space-y-2">
+            {["note", "aiExplanation", "aiSummary", "aiImprovements"].map((key) =>
+              note[key] && <div className="space-y-2">
                 <div className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
-                  Description
+                  {key}
                 </div>
                 <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
-                  {note.note}
+                  {note[key]}
                 </p>
               </div>
             )}
-
           </div>
         </div>
       )}

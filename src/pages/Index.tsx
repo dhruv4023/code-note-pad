@@ -111,8 +111,8 @@ export default function Index() {
       }
       setEditorPosition(null);
       setEditing(null);
-      setPage(1);
-      fetchNotes(1);
+      setPage(0);
+      fetchNotes(0);
     } catch (err: any) {
       toast.error(err.message || "Failed to save");
     } finally {
@@ -125,8 +125,8 @@ export default function Index() {
     try {
       await deleteNote(id);
       toast.success("Cell deleted");
-      setPage(1);
-      fetchNotes(1);
+      setPage(0);
+      fetchNotes(0);
     } catch {
       toast.error("Failed to delete");
     }

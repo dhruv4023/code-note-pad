@@ -32,7 +32,7 @@ async function request<T>(
   if (res.status === 204) {
     return undefined as T;
   }
-  
+
   return res.json();
 }
 
@@ -83,6 +83,9 @@ export interface CodeNote {
   note: string;
   title: string;
   aiTags: string[];
+  aiSummary?: string;
+  aiExplanation?: string;
+  aiImprovements?: string;
   createdAt?: string;
   updatedAt?: string;
 }
