@@ -2,8 +2,13 @@ import { useState } from "react";
 import { type CodeNote } from "@/lib/api";
 import { GitHubCodeBlock } from "./GitHubCodeBlock";
 import { isGitHubPermalink } from "@/lib/github";
-import { Pencil, Trash2, ChevronDown, ChevronRight, Code, FileText } from "lucide-react";
+import { Pencil, Trash2, ChevronDown, ChevronRight, Code, FileText, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface NoteCardProps {
   note: CodeNote;
@@ -12,83 +17,106 @@ interface NoteCardProps {
   onDelete: (id: number) => void;
 }
 
+const SECTION_LABELS: Record<string, string> = {
+  note: "Description",
+  aiExplanation: "AI Explanation",
+  aiSummary: "AI Summary",
+  aiImprovements: "AI Improvements",
+};
+
 export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
   const [collapsed, setCollapsed] = useState(false);
   const hasCode = note.permanentLink && isGitHubPermalink(note.permanentLink);
   const cellType = hasCode ? "Code" : "Markdown";
 
+  const formattedDate = note.updatedAt || note.createdAt
+    ? new Date(note.updatedAt || note.createdAt!).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   return (
     <div className="group relative rounded-xl border bg-background shadow-sm hover:shadow-md transition-all duration-200 animate-fade-in">
-
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/40 rounded-t-xl">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          {hasCode ? (
-            <Code className="w-4 h-4" />
-          ) : (
-            <FileText className="w-4 h-4" />
-          )}
-          <span className="text-xs font-mono uppercase tracking-wide">
-            {cellType}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {hasCode ? <Code className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+          <span className="text-xs font-mono uppercase tracking-wide">{cellType}</span>
+          <span className="text-xs font-mono opacity-60">• Cell {index + 1}</span>
+        </button>
+
+        {/* Title preview when collapsed */}
+        {collapsed && (
+          <span className="text-xs text-muted-foreground truncate ml-2 max-w-[200px]">
+            — {note.title}
           </span>
-          <span className="text-xs font-mono opacity-60">
-            • Cell {index + 1}
-          </span>
-        </div>
+        )}
 
         <div className="flex-1" />
 
+        {/* Timestamp */}
+        {formattedDate && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {formattedDate}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              Last modified
+            </TooltipContent>
+          </Tooltip>
+        )}
+
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-md hover:bg-muted"
-            onClick={() => onEdit(note)}
-          >
-            <Pencil className="w-4 h-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-md hover:bg-muted"
+                onClick={() => onEdit(note)}
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Edit cell</TooltipContent>
+          </Tooltip>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-md hover:bg-destructive/10 hover:text-destructive"
-            onClick={() => onDelete(note.id)}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-md hover:bg-muted"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            {collapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronDown className="w-4 h-4" />
-            )}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-md hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => onDelete(note.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Delete cell</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
       {!collapsed && (
         <div className="flex">
-
           {/* Gutter */}
           <div className="w-16 border-r bg-muted/20 flex items-start justify-end pr-3 pt-6">
-            <span className="text-xs font-mono text-muted-foreground">
-              [{index + 1}]:
-            </span>
+            <span className="text-xs font-mono text-muted-foreground">[{index + 1}]:</span>
           </div>
 
           {/* Body */}
-          <div className="flex-1 px-6 py-6 space-y-6 min-w-0">
-
-            {/* Title */}
-            <h3 className="text-lg font-semibold leading-snug">
-              {note.title}
-            </h3>
+          <div className="flex-1 px-6 py-6 space-y-5 min-w-0">
+            <h3 className="text-lg font-semibold leading-snug">{note.title}</h3>
 
             {/* GitHub Permalink */}
             {note.permanentLink && (
@@ -108,7 +136,7 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
               </div>
             )}
 
-            {/* Tags as Badges */}
+            {/* Tags */}
             {note.aiTags && note.aiTags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {note.aiTags.map((tag, i) => (
@@ -121,15 +149,19 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
                 ))}
               </div>
             )}
-            {["note", "aiExplanation", "aiSummary", "aiImprovements"].map((key) =>
-              note[key] && <div className="space-y-2">
-                <div className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
-                  {key}
+
+            {/* Content sections */}
+            {Object.keys(SECTION_LABELS).map((key) =>
+              note[key] ? (
+                <div key={key} className="space-y-2">
+                  <div className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+                    {SECTION_LABELS[key]}
+                  </div>
+                  <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                    {note[key]}
+                  </p>
                 </div>
-                <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
-                  {note[key]}
-                </p>
-              </div>
+              ) : null
             )}
           </div>
         </div>

@@ -9,6 +9,16 @@ import { Search, BookOpen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Index() {
   const { isAuthenticated } = useAuth();
@@ -17,10 +27,11 @@ export default function Index() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<CodeNote | null>(null);
-  const [editorPosition, setEditorPosition] = useState<number | null>(null); // index where editor appears
+  const [editorPosition, setEditorPosition] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 20;
 
@@ -66,28 +77,26 @@ export default function Index() {
     return () => observer.disconnect();
   }, [hasMore, loading, loadingMore, page, fetchNotes]);
 
+  // Keyboard shortcut: Ctrl+N for new cell
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+        e.preventDefault();
+        openNewAt(0);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const getBeforeAfterIds = () => {
-    if (editorPosition === null) {
-      return { beforeId: null, afterId: null };
-    }
-
-    // Insert at top
+    if (editorPosition === null) return { beforeId: null, afterId: null };
     if (editorPosition === 0) {
-      return {
-        beforeId: null,
-        afterId: filteredNotes[0]?.id ?? null,
-      };
+      return { beforeId: null, afterId: filteredNotes[0]?.id ?? null };
     }
-
-    // Insert at bottom of loaded list
     if (editorPosition >= filteredNotes.length) {
-      return {
-        beforeId: filteredNotes[filteredNotes.length - 1]?.id ?? null,
-        afterId: null,
-      };
+      return { beforeId: filteredNotes[filteredNotes.length - 1]?.id ?? null, afterId: null };
     }
-
-    // Insert in middle
     return {
       beforeId: filteredNotes[editorPosition - 1]?.id ?? null,
       afterId: filteredNotes[editorPosition]?.id ?? null,
@@ -102,11 +111,7 @@ export default function Index() {
         toast.success("Cell updated");
       } else {
         const { beforeId, afterId } = getBeforeAfterIds();
-        await addNote({
-          entry: data,
-          afterId,
-          beforeId,
-        });
+        await addNote({ entry: data, afterId, beforeId });
         toast.success("Cell added");
       }
       setEditorPosition(null);
@@ -121,14 +126,20 @@ export default function Index() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this cell?")) return;
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteTarget === null) return;
     try {
-      await deleteNote(id);
+      await deleteNote(deleteTarget);
       toast.success("Cell deleted");
       setPage(0);
       fetchNotes(0);
     } catch {
       toast.error("Failed to delete");
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -172,7 +183,7 @@ export default function Index() {
           <div className="relative w-60">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search cells..."
+              placeholder="Search cells... (title, tags)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8 h-8 text-xs bg-muted/50 border-border rounded-md"
@@ -184,8 +195,8 @@ export default function Index() {
       <main className="max-w-4xl mx-auto px-4 py-4">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin" />
+            <div className="flex flex-col items-center gap-3 text-muted-foreground">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
               <span className="text-sm">Loading notebook...</span>
             </div>
           </div>
@@ -193,23 +204,25 @@ export default function Index() {
           <div className="cell rounded-lg">
             <div className="flex items-center justify-center py-16">
               <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center mx-auto">
-                  <BookOpen className="w-6 h-6 text-muted-foreground" />
+                <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+                  <BookOpen className="w-7 h-7 text-muted-foreground" />
                 </div>
                 <p className="text-sm font-medium">Empty notebook</p>
-                <p className="text-xs text-muted-foreground">Click '+ Cell' to add your first cell</p>
-                <Button size="sm" variant="outline" onClick={() => openNewAt(0)} className="h-7 text-xs rounded mt-2">
-                  + Add Cell
-                </Button>
+                <p className="text-xs text-muted-foreground">
+                  {search ? "No cells match your search" : "Click '+ Cell' or press Ctrl+N to add your first cell"}
+                </p>
+                {!search && (
+                  <Button size="sm" variant="outline" onClick={() => openNewAt(0)} className="h-8 text-xs rounded-lg mt-2">
+                    + Add Cell
+                  </Button>
+                )}
               </div>
             </div>
           </div>
         ) : (
           <div className="space-y-0">
-            {/* Top insert */}
             <AddCellButton onClick={() => openNewAt(0)} />
 
-            {/* Editor at position 0 (top) */}
             {editorPosition === 0 && !editing && (
               <div className="mb-1">
                 <NoteEditor note={null} onSave={handleSave} onCancel={closeEditor} saving={saving} />
@@ -218,7 +231,6 @@ export default function Index() {
 
             {filteredNotes.map((note, i) => (
               <div key={note.id}>
-                {/* Editor replacing this cell (edit mode) */}
                 {editorPosition === i && editing?.id === note.id ? (
                   <div className="mb-1">
                     <NoteEditor note={editing} onSave={handleSave} onCancel={closeEditor} saving={saving} />
@@ -226,11 +238,7 @@ export default function Index() {
                 ) : (
                   <NoteCard note={note} index={i} onEdit={handleEdit} onDelete={handleDelete} />
                 )}
-
-                {/* Insert button after each cell */}
                 <AddCellButton onClick={() => openNewAt(i + 1)} />
-
-                {/* Editor inserted after this cell */}
                 {editorPosition === i + 1 && !editing && (
                   <div className="mb-1">
                     <NoteEditor note={null} onSave={handleSave} onCancel={closeEditor} saving={saving} />
@@ -253,7 +261,7 @@ export default function Index() {
           </div>
         )}
 
-        {/* Bottom kernel status bar */}
+        {/* Kernel status bar */}
         <div className="border-t border-border mt-6 pt-3 pb-6">
           <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono">
             <span>CodePad Kernel • Ready</span>
@@ -261,6 +269,24 @@ export default function Index() {
           </div>
         </div>
       </main>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this cell?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The cell and its contents will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

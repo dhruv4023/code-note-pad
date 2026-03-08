@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { storage } from "@/lib/storage";
-import { login as apiLogin, logout as apiLogout, signup as apiSignup } from "@/lib/api";
+import { login as apiLogin, logout as apiLogout, signup as apiSignup, setOnAuthExpired } from "@/lib/api";
+import { toast } from "sonner";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -21,6 +22,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(!!token);
       setIsLoading(false);
     });
+
+    // Listen for token expiry from API layer
+    setOnAuthExpired(() => {
+      setIsAuthenticated(false);
+      toast.error("Session expired. Please sign in again.");
+    });
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
@@ -35,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     await apiLogout();
     setIsAuthenticated(false);
+    toast.success("Signed out successfully");
   }, []);
 
   return (
