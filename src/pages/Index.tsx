@@ -19,14 +19,14 @@ export default function Index() {
   const [editing, setEditing] = useState<CodeNote | null>(null);
   const [editorPosition, setEditorPosition] = useState<number | null>(null); // index where editor appears
   const [saving, setSaving] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 20;
 
   const fetchNotes = useCallback(async (pageNum: number, append = false) => {
     if (!isAuthenticated) return;
-    if (pageNum === 1) setLoading(true);
+    if (pageNum === 0) setLoading(true);
     else setLoadingMore(true);
     try {
       const res = await getAllNotes(pageNum, PAGE_SIZE);
@@ -46,7 +46,7 @@ export default function Index() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    fetchNotes(1);
+    fetchNotes(0);
   }, [fetchNotes]);
 
   // Infinite scroll observer
@@ -66,6 +66,34 @@ export default function Index() {
     return () => observer.disconnect();
   }, [hasMore, loading, loadingMore, page, fetchNotes]);
 
+  const getBeforeAfterIds = () => {
+    if (editorPosition === null) {
+      return { beforeId: null, afterId: null };
+    }
+
+    // Insert at top
+    if (editorPosition === 0) {
+      return {
+        beforeId: null,
+        afterId: filteredNotes[0]?.id ?? null,
+      };
+    }
+
+    // Insert at bottom of loaded list
+    if (editorPosition >= filteredNotes.length) {
+      return {
+        beforeId: filteredNotes[filteredNotes.length - 1]?.id ?? null,
+        afterId: null,
+      };
+    }
+
+    // Insert in middle
+    return {
+      beforeId: filteredNotes[editorPosition - 1]?.id ?? null,
+      afterId: filteredNotes[editorPosition]?.id ?? null,
+    };
+  };
+
   const handleSave = async (data: { title: string; note: string; permanentLink: string; aiTags: string[] }) => {
     setSaving(true);
     try {
@@ -73,7 +101,12 @@ export default function Index() {
         await updateNote(editing.id, data);
         toast.success("Cell updated");
       } else {
-        await addNote(data);
+        const { beforeId, afterId } = getBeforeAfterIds();
+        await addNote({
+          entry: data,
+          afterId,
+          beforeId,
+        });
         toast.success("Cell added");
       }
       setEditorPosition(null);
@@ -209,7 +242,7 @@ export default function Index() {
         )}
 
         {/* Infinite scroll sentinel */}
-        {hasMore && !loading && (
+        {notes.length > 0 && hasMore && !loading && (
           <div ref={sentinelRef} className="flex items-center justify-center py-6">
             {loadingMore && (
               <div className="flex items-center gap-2 text-muted-foreground">

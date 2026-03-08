@@ -28,6 +28,11 @@ async function request<T>(
     const err = await res.json().catch(() => ({ message: "Request failed" }));
     throw new Error(err.message || `HTTP ${res.status}`);
   }
+
+  if (res.status === 204) {
+    return undefined as T;
+  }
+  
   return res.json();
 }
 
@@ -89,15 +94,19 @@ export interface NotesResponse {
   size?: number;
 }
 
-export async function addNote(note: {
-  permanentLink: string;
-  note: string;
-  title: string;
-  aiTags: string[];
+export async function addNote(payload: {
+  afterId: number;
+  beforeId: number;
+  entry: {
+    permanentLink: string;
+    note: string;
+    title: string;
+    aiTags: string[];
+  }
 }) {
-  return request<{ data: CodeNote }>("/code-note/add", {
+  return request<{ data: CodeNote }>("/code-note/add-by-position", {
     method: "POST",
-    body: JSON.stringify(note),
+    body: JSON.stringify(payload),
   });
 }
 

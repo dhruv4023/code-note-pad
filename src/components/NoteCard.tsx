@@ -18,70 +18,122 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
   const cellType = hasCode ? "Code" : "Markdown";
 
   return (
-    <div className="group cell rounded-lg animate-fade-in">
-      {/* Cell header bar */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/50 cell-toolbar">
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          {hasCode ? <Code className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
-          <span className="text-[10px] font-mono uppercase">{cellType}</span>
-          <span className="text-[10px] font-mono text-muted-foreground/60">• Cell {index + 1}</span>
+    <div className="group relative rounded-xl border bg-background shadow-sm hover:shadow-md transition-all duration-200 animate-fade-in">
+
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/40 rounded-t-xl">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          {hasCode ? (
+            <Code className="w-4 h-4" />
+          ) : (
+            <FileText className="w-4 h-4" />
+          )}
+          <span className="text-xs font-mono uppercase tracking-wide">
+            {cellType}
+          </span>
+          <span className="text-xs font-mono opacity-60">
+            • Cell {index + 1}
+          </span>
         </div>
+
         <div className="flex-1" />
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button variant="ghost" size="icon" className="h-5 w-5 rounded hover:bg-muted" onClick={() => onEdit(note)}>
-            <Pencil className="w-2.5 h-2.5" />
+
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md hover:bg-muted"
+            onClick={() => onEdit(note)}
+          >
+            <Pencil className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-5 w-5 rounded hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(note.id)}>
-            <Trash2 className="w-2.5 h-2.5" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => onDelete(note.id)}
+          >
+            <Trash2 className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-5 w-5 rounded hover:bg-muted" onClick={() => setCollapsed(!collapsed)}>
-            {collapsed ? <ChevronRight className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md hover:bg-muted"
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            {collapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
           </Button>
         </div>
       </div>
 
       {!collapsed && (
         <div className="flex">
+
           {/* Gutter */}
-          <div className="flex-shrink-0 w-16 flex items-start justify-end pr-3 pt-4 border-r border-border/30">
-            <span className="execution-count select-none">[{index + 1}]:</span>
+          <div className="w-16 border-r bg-muted/20 flex items-start justify-end pr-3 pt-6">
+            <span className="text-xs font-mono text-muted-foreground">
+              [{index + 1}]:
+            </span>
           </div>
 
-          {/* Cell body */}
-          <div className="flex-1 py-4 px-5 space-y-5 min-w-0">
-            {/* Title */}
-            <h3 className="text-base font-semibold leading-snug border-b border-border/30 pb-2">{note.title}</h3>
+          {/* Body */}
+          <div className="flex-1 px-6 py-6 space-y-6 min-w-0">
 
-            {/* ### GitHub Permlink */}
+            {/* Title */}
+            <h3 className="text-lg font-semibold leading-snug">
+              {note.title}
+            </h3>
+
+            {/* GitHub Permalink */}
             {note.permanentLink && (
               <div className="space-y-2">
-                <div className="text-[11px] font-semibold text-muted-foreground font-mono">### GitHub Permlink</div>
                 {hasCode ? (
                   <GitHubCodeBlock url={note.permanentLink} />
                 ) : (
-                  <a href={note.permanentLink} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-primary hover:underline break-all font-mono block pl-1">
+                  <a
+                    href={note.permanentLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline break-all font-mono"
+                  >
                     {note.permanentLink}
                   </a>
                 )}
               </div>
             )}
 
-            {/* ### Tags */}
+            {/* Tags as Badges */}
             {note.aiTags && note.aiTags.length > 0 && (
-              <div className="space-y-1.5">
-                <div className="text-[11px] font-semibold text-muted-foreground font-mono">### Tags</div>
-                <p className="text-sm text-foreground/80 font-mono pl-1">{note.aiTags.join(", ")}</p>
+              <div className="flex flex-wrap gap-2">
+                {note.aiTags.map((tag, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
             )}
 
-            {/* ### Description */}
+            {/* Description */}
             {note.note && (
-              <div className="space-y-1.5">
-                <div className="text-[11px] font-semibold text-muted-foreground font-mono">### Description</div>
-                <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap pl-1">{note.note}</p>
+              <div className="space-y-2">
+                <div className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+                  Description
+                </div>
+                <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                  {note.note}
+                </p>
               </div>
             )}
+
           </div>
         </div>
       )}
