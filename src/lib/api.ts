@@ -2,13 +2,61 @@ import { storage } from "./storage";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+let onAuthExpired: (() => void) | null = null;
+
+export function setOnAuthExpired(cb: () => void) {
+  onAuthExpired = cb;
+}
+
 async function getToken(): Promise<string | null> {
   return storage.get("authToken");
 }
 
+async function refreshToken(): Promise<string | null> {
+  try {
+    const token = await getToken();
+    if (!token) return null;
+
+    const res = await fetch(`${BASE_URL}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const newToken = data?.data?.[0]?.token || data?.token;
+    if (newToken) {
+      await storage.set("authToken", newToken);
+      return newToken;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function getRefreshedToken(): Promise<string | null> {
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+  isRefreshing = true;
+  refreshPromise = refreshToken().finally(() => {
+    isRefreshing = false;
+    refreshPromise = null;
+  });
+  return refreshPromise;
+}
+
 async function request<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  _retry = false
 ): Promise<T> {
   const token = await getToken();
   const headers: Record<string, string> = {
@@ -23,6 +71,18 @@ async function request<T>(
     ...options,
     headers,
   });
+
+  // Auto-refresh on 401 and retry once
+  if (res.status === 401 && !_retry) {
+    const newToken = await getRefreshedToken();
+    if (newToken) {
+      return request<T>(endpoint, options, true);
+    }
+    // Refresh failed — session expired
+    await storage.remove("authToken");
+    onAuthExpired?.();
+    throw new Error("Session expired. Please sign in again.");
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: "Request failed" }));
@@ -88,6 +148,7 @@ export interface CodeNote {
   aiImprovements?: string;
   createdAt?: string;
   updatedAt?: string;
+  [key: string]: any;
 }
 
 export interface NotesResponse {
@@ -98,14 +159,14 @@ export interface NotesResponse {
 }
 
 export async function addNote(payload: {
-  afterId: number;
-  beforeId: number;
+  afterId: number | null;
+  beforeId: number | null;
   entry: {
     permanentLink: string;
     note: string;
     title: string;
     aiTags: string[];
-  }
+  };
 }) {
   return request<{ data: CodeNote }>("/code-note/add-by-position", {
     method: "POST",
