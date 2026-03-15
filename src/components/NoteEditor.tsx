@@ -9,7 +9,7 @@ import { X, Plus, Link, Play, Loader2 } from "lucide-react";
 
 interface NoteEditorProps {
   note?: CodeNote | null;
-  onSave: (data: { title: string; note: string; permanentLink: string; aiTags: string[] }) => void;
+  onSave: (data: { title: string; description: string; permanentLink: string; aiTags: string[] }) => void;
   onCancel: () => void;
   saving?: boolean;
 }
@@ -25,14 +25,13 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
   useEffect(() => {
     if (note) {
       setTitle(note.title);
-      setBody(note.note);
+      setBody(note.description || "");
       setPermanentLink(note.permanentLink || "");
       setTags(note.aiTags || []);
     }
   }, [note]);
 
   useEffect(() => {
-    // Auto-focus title on mount
     setTimeout(() => titleRef.current?.focus(), 100);
   }, []);
 
@@ -49,19 +48,12 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!title.trim()) return;
-    onSave({ title: title.trim(), note: body.trim(), permanentLink: permanentLink.trim(), aiTags: tags });
+    onSave({ title: title.trim(), description: body.trim(), permanentLink: permanentLink.trim(), aiTags: tags });
   };
 
-  // Keyboard shortcuts: Ctrl/Cmd+Enter to save, Escape to cancel
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-      e.preventDefault();
-      handleSubmit();
-    }
-    if (e.key === "Escape") {
-      e.preventDefault();
-      onCancel();
-    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); handleSubmit(); }
+    if (e.key === "Escape") { e.preventDefault(); onCancel(); }
   };
 
   const showPreview = permanentLink && isGitHubPermalink(permanentLink);
@@ -69,7 +61,6 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
   return (
     <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="animate-fade-in">
       <div className="cell rounded-lg cell-active overflow-hidden">
-        {/* Cell header */}
         <div className="flex items-center justify-between px-3 py-2 cell-toolbar border-b border-border/50">
           <div className="flex items-center gap-2">
             <Play className="w-3.5 h-3.5 text-primary" />
@@ -86,12 +77,10 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
         </div>
 
         <div className="flex">
-          {/* Gutter */}
           <div className="flex-shrink-0 w-14 flex items-start justify-end pr-2 pt-3">
             <span className="execution-count select-none">[*]:</span>
           </div>
 
-          {/* Editor content */}
           <div className="flex-1 py-3 pr-4 space-y-4">
             <Input
               ref={titleRef}
@@ -102,7 +91,6 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
               required
             />
 
-            {/* GitHub Permlink */}
             <div className="space-y-1.5">
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">### GitHub Permlink</h4>
               <div className="flex items-center gap-2 rounded-md bg-muted/50 px-2.5 py-1.5">
@@ -121,7 +109,6 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
               )}
             </div>
 
-            {/* Tags */}
             <div className="space-y-1.5">
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">### Tags</h4>
               <div className="flex gap-2 items-center">
@@ -130,11 +117,7 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      addTag();
-                    }
+                    if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); addTag(); }
                   }}
                   className="flex-1 bg-transparent text-xs font-mono outline-none placeholder:text-muted-foreground/40 border-b border-border/30 py-1 focus:border-primary transition-colors"
                 />
@@ -160,7 +143,6 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
               )}
             </div>
 
-            {/* Description */}
             <div className="space-y-1.5">
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">### Description</h4>
               <Textarea
@@ -172,25 +154,9 @@ export function NoteEditor({ note, onSave, onCancel, saving }: NoteEditorProps) 
               />
             </div>
 
-            {/* Actions */}
             <div className="flex gap-2 pt-1 border-t border-border/30">
-              <Button
-                type="submit"
-                disabled={saving || !title.trim()}
-                size="sm"
-                className="h-8 px-4 text-xs rounded-lg font-medium gap-1.5"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3 h-3" />
-                    {note ? "Update Cell" : "Run Cell"}
-                  </>
-                )}
+              <Button type="submit" disabled={saving || !title.trim()} size="sm" className="h-8 px-4 text-xs rounded-lg font-medium gap-1.5">
+                {saving ? (<><Loader2 className="w-3 h-3 animate-spin" />Running...</>) : (<><Play className="w-3 h-3" />{note ? "Update Cell" : "Run Cell"}</>)}
               </Button>
               <Button type="button" variant="ghost" size="sm" onClick={onCancel} className="h-8 px-3 text-xs rounded-lg">
                 Cancel
