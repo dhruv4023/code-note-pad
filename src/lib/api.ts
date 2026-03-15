@@ -18,17 +18,11 @@ async function refreshToken(): Promise<string | null> {
   try {
     const token = await getToken();
     if (!token) return null;
-
     const res = await fetch(`${BASE_URL}/auth/refresh`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     });
-
     if (!res.ok) return null;
-
     const data = await res.json();
     const newToken = data?.data?.[0]?.token || data?.token;
     if (newToken) {
@@ -42,9 +36,7 @@ async function refreshToken(): Promise<string | null> {
 }
 
 async function getRefreshedToken(): Promise<string | null> {
-  if (isRefreshing && refreshPromise) {
-    return refreshPromise;
-  }
+  if (isRefreshing && refreshPromise) return refreshPromise;
   isRefreshing = true;
   refreshPromise = refreshToken().finally(() => {
     isRefreshing = false;
@@ -53,32 +45,19 @@ async function getRefreshedToken(): Promise<string | null> {
   return refreshPromise;
 }
 
-async function request<T>(
-  endpoint: string,
-  options: RequestInit = {},
-  _retry = false
-): Promise<T> {
+async function request<T>(endpoint: string, options: RequestInit = {}, _retry = false): Promise<T> {
   const token = await getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const res = await fetch(`${BASE_URL}${endpoint}`, { ...options, headers });
 
-  // Auto-refresh on 401 and retry once
   if (res.status === 401 && !_retry) {
     const newToken = await getRefreshedToken();
-    if (newToken) {
-      return request<T>(endpoint, options, true);
-    }
-    // Refresh failed — session expired
+    if (newToken) return request<T>(endpoint, options, true);
     await storage.remove("authToken");
     onAuthExpired?.();
     throw new Error("Session expired. Please sign in again.");
@@ -89,14 +68,12 @@ async function request<T>(
     throw new Error(err.message || `HTTP ${res.status}`);
   }
 
-  if (res.status === 204) {
-    return undefined as T;
-  }
-
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 
-// Auth
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
 export interface LoginResponse {
   data: { token: string }[];
 }
@@ -112,35 +89,69 @@ export async function login(username: string, password: string) {
 }
 
 export async function signup(username: string, email: string) {
-  return request("/auth/signup", {
-    method: "POST",
-    body: JSON.stringify({ username, email }),
-  });
+  return request("/auth/signup", { method: "POST", body: JSON.stringify({ username, email }) });
 }
 
 export async function forgotPassword(userName: string) {
-  return request("/auth/forgot-password", {
-    method: "POST",
-    body: JSON.stringify({ userName }),
-  });
+  return request("/auth/forgot-password", { method: "POST", body: JSON.stringify({ userName }) });
 }
 
 export async function changePassword(newPassword: string) {
-  return request("/auth/change-password", {
-    method: "POST",
-    body: JSON.stringify({ newPassword }),
-  });
+  return request("/auth/change-password", { method: "POST", body: JSON.stringify({ newPassword }) });
 }
 
 export async function logout() {
   await storage.remove("authToken");
 }
 
-// Notes
+// ─── Notebooks ───────────────────────────────────────────────────────────────
+
+export interface Notebook {
+  id: number;
+  name: string;
+  description: string;
+  notebookType?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: any;
+}
+
+export interface NotebooksResponse {
+  data: Notebook[];
+  total?: number;
+  page?: number;
+  size?: number;
+}
+
+export async function addNotebook(payload: { name: string; description: string }) {
+  return request<{ data: Notebook }>("/notebook/add", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateNotebook(id: number, payload: { name: string; description: string }) {
+  return request<{ data: Notebook }>(`/notebook/update/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getNotebook(id: number) {
+  return request<{ data: Notebook }>(`/notebook/get/${id}`);
+}
+
+export async function getAllNotebooks(page = 0, size = 50) {
+  return request<NotebooksResponse>(`/notebook/getAll?page=${page}&size=${size}`);
+}
+
+// ─── Code Notes ──────────────────────────────────────────────────────────────
+
 export interface CodeNote {
   id: number;
+  notebookId: number;
   permanentLink: string;
-  note: string;
+  description: string;
   title: string;
   aiTags: string[];
   aiSummary?: string;
@@ -159,13 +170,14 @@ export interface NotesResponse {
 }
 
 export async function addNote(payload: {
-  afterId: number | null;
-  beforeId: number | null;
+  afterId?: number | null;
+  beforeId?: number | null;
   entry: {
     permanentLink: string;
-    note: string;
+    description: string;
     title: string;
-    aiTags: string[];
+    notebookId: number;
+    aiTags?: string[];
   };
 }) {
   return request<{ data: CodeNote }>("/code-note/add-by-position", {
@@ -176,12 +188,7 @@ export async function addNote(payload: {
 
 export async function updateNote(
   id: number,
-  note: {
-    permanentLink: string;
-    note: string;
-    title: string;
-    aiTags: string[];
-  }
+  note: { permanentLink: string; description: string; title: string; aiTags: string[] }
 ) {
   return request<{ data: CodeNote }>(`/code-note/update/${id}`, {
     method: "PUT",
@@ -189,10 +196,12 @@ export async function updateNote(
   });
 }
 
-export async function getAllNotes(page = 1, size = 10) {
-  return request<NotesResponse>(
-    `/code-note/getAll?page=${page}&size=${size}`
-  );
+export async function getNotesByNotebook(notebookId: number, page = 0, size = 20) {
+  return request<NotesResponse>(`/code-note/notebook/${notebookId}?page=${page}&size=${size}`);
+}
+
+export async function getAllNotes(page = 0, size = 20) {
+  return request<NotesResponse>(`/code-note/getAll?page=${page}&size=${size}`);
 }
 
 export async function getNote(id: number) {

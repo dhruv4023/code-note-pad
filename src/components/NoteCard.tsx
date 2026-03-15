@@ -18,7 +18,7 @@ interface NoteCardProps {
 }
 
 const SECTION_LABELS: Record<string, string> = {
-  note: "Description",
+  description: "Description",
   aiExplanation: "AI Explanation",
   aiSummary: "AI Summary",
   aiImprovements: "AI Improvements",
@@ -31,10 +31,7 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
 
   const formattedDate = note.updatedAt || note.createdAt
     ? new Date(note.updatedAt || note.createdAt!).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
       })
     : null;
 
@@ -52,7 +49,6 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
           <span className="text-xs font-mono opacity-60">• Cell {index + 1}</span>
         </button>
 
-        {/* Title preview when collapsed */}
         {collapsed && (
           <span className="text-xs text-muted-foreground truncate ml-2 max-w-[200px]">
             — {note.title}
@@ -61,7 +57,6 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
 
         <div className="flex-1" />
 
-        {/* Timestamp */}
         {formattedDate && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -70,35 +65,22 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
                 {formattedDate}
               </span>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">
-              Last modified
-            </TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">Last modified</TooltipContent>
           </Tooltip>
         )}
 
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-md hover:bg-muted"
-                onClick={() => onEdit(note)}
-              >
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md hover:bg-muted" onClick={() => onEdit(note)}>
                 <Pencil className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">Edit cell</TooltipContent>
           </Tooltip>
-
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-md hover:bg-destructive/10 hover:text-destructive"
-                onClick={() => onDelete(note.id)}
-              >
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(note.id)}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
@@ -109,48 +91,35 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
 
       {!collapsed && (
         <div className="flex">
-          {/* Gutter */}
           <div className="w-16 border-r bg-muted/20 flex items-start justify-end pr-3 pt-6">
             <span className="text-xs font-mono text-muted-foreground">[{index + 1}]:</span>
           </div>
 
-          {/* Body */}
           <div className="flex-1 px-6 py-6 space-y-5 min-w-0">
             <h3 className="text-lg font-semibold leading-snug">{note.title}</h3>
 
-            {/* GitHub Permalink */}
             {note.permanentLink && (
               <div className="space-y-2">
                 {hasCode ? (
                   <GitHubCodeBlock url={note.permanentLink} />
                 ) : (
-                  <a
-                    href={note.permanentLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline break-all font-mono"
-                  >
+                  <a href={note.permanentLink} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline break-all font-mono">
                     {note.permanentLink}
                   </a>
                 )}
               </div>
             )}
 
-            {/* Tags */}
             {note.aiTags && note.aiTags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {note.aiTags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition"
-                  >
+                  <span key={i} className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition">
                     {tag}
                   </span>
                 ))}
               </div>
             )}
 
-            {/* Content sections */}
             {Object.keys(SECTION_LABELS).map((key) =>
               note[key] ? (
                 <div key={key} className="space-y-2">
