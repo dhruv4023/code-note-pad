@@ -211,3 +211,15 @@ export async function getNote(id: number) {
 export async function deleteNote(id: number) {
   return request(`/code-note/delete/${id}`, { method: "DELETE" });
 }
+
+export async function addPrNotesByPosition(payload: {
+  prLink: string;
+  notebookId: number;
+  afterId?: number | null;
+  beforeId?: number | null;
+}) {
+  return request<{ data: CodeNote[] }>("/code-note/add-pr-notes-by-position", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

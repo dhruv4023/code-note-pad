@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { NoteCard } from "@/components/NoteCard";
 import { NoteEditor } from "@/components/NoteEditor";
 import { AddCellButton } from "@/components/AddCellButton";
+import { PrImportDialog } from "@/components/PrImportDialog";
 import { NotebookSidebar } from "@/components/NotebookSidebar";
 import {
   getAllNotebooks,
@@ -13,6 +14,7 @@ import {
   addNote,
   updateNote,
   deleteNote,
+  addPrNotesByPosition,
   type CodeNote,
   type Notebook,
 } from "@/lib/api";
@@ -50,6 +52,7 @@ export default function Index() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [prImportPosition, setPrImportPosition] = useState<number | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 20;
 
@@ -205,6 +208,32 @@ export default function Index() {
     setEditing(null);
   };
 
+  const openPrImportAt = (position: number) => {
+    setPrImportPosition(position);
+  };
+
+  const handlePrImport = async (prLink: string) => {
+    if (!activeNotebook) return;
+    const pos = prImportPosition ?? 0;
+    let afterId: number | null = null;
+    let beforeId: number | null = null;
+    if (pos === 0) {
+      beforeId = null;
+      afterId = filteredNotes[0]?.id ?? null;
+    } else if (pos >= filteredNotes.length) {
+      beforeId = filteredNotes[filteredNotes.length - 1]?.id ?? null;
+      afterId = null;
+    } else {
+      beforeId = filteredNotes[pos - 1]?.id ?? null;
+      afterId = filteredNotes[pos]?.id ?? null;
+    }
+    await addPrNotesByPosition({ prLink, notebookId: activeNotebook.id, afterId, beforeId });
+    toast.success("PR notes imported");
+    setPrImportPosition(null);
+    setPage(0);
+    fetchNotes(0);
+  };
+
   const handleAddNotebook = async (name: string, description: string) => {
     await addNotebook({ name, description });
     toast.success("Notebook created");
@@ -319,7 +348,7 @@ export default function Index() {
                 </div>
               ) : (
                 <div className="space-y-0">
-                  <AddCellButton onClick={() => openNewAt(0)} />
+                  <AddCellButton onClick={() => openNewAt(0)} onPrImport={() => openPrImportAt(0)} />
                   {editorPosition === 0 && !editing && (
                     <div className="mb-1">
                       <NoteEditor note={null} onSave={handleSave} onCancel={closeEditor} saving={saving} />
@@ -334,7 +363,7 @@ export default function Index() {
                       ) : (
                         <NoteCard note={note} index={i} onEdit={handleEdit} onDelete={handleDelete} />
                       )}
-                      <AddCellButton onClick={() => openNewAt(i + 1)} />
+                      <AddCellButton onClick={() => openNewAt(i + 1)} onPrImport={() => openPrImportAt(i + 1)} />
                       {editorPosition === i + 1 && !editing && (
                         <div className="mb-1">
                           <NoteEditor note={null} onSave={handleSave} onCancel={closeEditor} saving={saving} />
@@ -385,6 +414,12 @@ export default function Index() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PrImportDialog
+        open={prImportPosition !== null}
+        onClose={() => setPrImportPosition(null)}
+        onSubmit={handlePrImport}
+      />
     </div>
   );
 }
