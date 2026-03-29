@@ -208,6 +208,32 @@ export default function Index() {
     setEditing(null);
   };
 
+  const openPrImportAt = (position: number) => {
+    setPrImportPosition(position);
+  };
+
+  const handlePrImport = async (prLink: string) => {
+    if (!activeNotebook) return;
+    const pos = prImportPosition ?? 0;
+    let afterId: number | null = null;
+    let beforeId: number | null = null;
+    if (pos === 0) {
+      beforeId = null;
+      afterId = filteredNotes[0]?.id ?? null;
+    } else if (pos >= filteredNotes.length) {
+      beforeId = filteredNotes[filteredNotes.length - 1]?.id ?? null;
+      afterId = null;
+    } else {
+      beforeId = filteredNotes[pos - 1]?.id ?? null;
+      afterId = filteredNotes[pos]?.id ?? null;
+    }
+    await addPrNotesByPosition({ prLink, notebookId: activeNotebook.id, afterId, beforeId });
+    toast.success("PR notes imported");
+    setPrImportPosition(null);
+    setPage(0);
+    fetchNotes(0);
+  };
+
   const handleAddNotebook = async (name: string, description: string) => {
     await addNotebook({ name, description });
     toast.success("Notebook created");
