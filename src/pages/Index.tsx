@@ -348,7 +348,7 @@ export default function Index() {
                 </div>
               ) : (
                 <div className="space-y-0">
-                  <AddCellButton onClick={() => openNewAt(0)} />
+                  <AddCellButton onClick={() => openNewAt(0)} onPrImport={() => openPrImportAt(0)} />
                   {editorPosition === 0 && !editing && (
                     <div className="mb-1">
                       <NoteEditor note={null} onSave={handleSave} onCancel={closeEditor} saving={saving} />
@@ -363,7 +363,7 @@ export default function Index() {
                       ) : (
                         <NoteCard note={note} index={i} onEdit={handleEdit} onDelete={handleDelete} />
                       )}
-                      <AddCellButton onClick={() => openNewAt(i + 1)} />
+                      <AddCellButton onClick={() => openNewAt(i + 1)} onPrImport={() => openPrImportAt(i + 1)} />
                       {editorPosition === i + 1 && !editing && (
                         <div className="mb-1">
                           <NoteEditor note={null} onSave={handleSave} onCancel={closeEditor} saving={saving} />
