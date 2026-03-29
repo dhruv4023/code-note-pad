@@ -414,6 +414,12 @@ export default function Index() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PrImportDialog
+        open={prImportPosition !== null}
+        onClose={() => setPrImportPosition(null)}
+        onSubmit={handlePrImport}
+      />
     </div>
   );
 }
