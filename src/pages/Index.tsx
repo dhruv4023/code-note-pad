@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { NoteCard } from "@/components/NoteCard";
 import { NoteEditor } from "@/components/NoteEditor";
 import { AddCellButton } from "@/components/AddCellButton";
+import { PrImportDialog } from "@/components/PrImportDialog";
 import { NotebookSidebar } from "@/components/NotebookSidebar";
 import {
   getAllNotebooks,
@@ -13,6 +14,7 @@ import {
   addNote,
   updateNote,
   deleteNote,
+  addPrNotesByPosition,
   type CodeNote,
   type Notebook,
 } from "@/lib/api";
