@@ -52,6 +52,7 @@ export default function Index() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [prImportPosition, setPrImportPosition] = useState<number | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 20;
 
