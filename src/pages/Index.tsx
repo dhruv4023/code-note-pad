@@ -6,6 +6,7 @@ import { NoteEditor } from "@/components/NoteEditor";
 import { AddCellButton } from "@/components/AddCellButton";
 import { PrImportDialog } from "@/components/PrImportDialog";
 import { NotebookSidebar } from "@/components/NotebookSidebar";
+import { ChatPanel } from "@/components/ChatPanel";
 import {
   getAllNotebooks,
   addNotebook,
@@ -32,6 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { storage } from "@/lib/storage";
 
 export default function Index() {
   const { isAuthenticated } = useAuth();
@@ -56,6 +58,38 @@ export default function Index() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 20;
 
+  // Chat panel
+  const [chatOpen, setChatOpen] = useState(false);
+  // Mobile sidebar
+  const [mobileSidebar, setMobileSidebar] = useState(false);
+
+  // Persist chat open state
+  useEffect(() => {
+    storage.get("chatPanelOpen").then((v) => {
+      if (v === "true") setChatOpen(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    storage.set("chatPanelOpen", chatOpen ? "true" : "false");
+  }, [chatOpen]);
+
+  // Ctrl+B to toggle chat
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "b") {
+        e.preventDefault();
+        setChatOpen((p) => !p);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
+        e.preventDefault();
+        if (activeNotebook) openNewAt(0);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [activeNotebook]);
+
   // Fetch notebooks
   const fetchNotebooks = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -64,10 +98,7 @@ export default function Index() {
       const res = await getAllNotebooks();
       const list = res.data || [];
       setNotebooks(list);
-      // Auto-select first notebook if none selected
-      if (!activeNotebook && list.length > 0) {
-        setActiveNotebook(list[0]);
-      }
+      if (!activeNotebook && list.length > 0) setActiveNotebook(list[0]);
     } catch {
       toast.error("Failed to load notebooks");
     } finally {
@@ -75,11 +106,9 @@ export default function Index() {
     }
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    fetchNotebooks();
-  }, [fetchNotebooks]);
+  useEffect(() => { fetchNotebooks(); }, [fetchNotebooks]);
 
-  // Fetch notes for active notebook
+  // Fetch notes
   const fetchNotes = useCallback(
     async (pageNum: number, append = false) => {
       if (!isAuthenticated || !activeNotebook) return;
@@ -102,11 +131,7 @@ export default function Index() {
   );
 
   useEffect(() => {
-    if (activeNotebook) {
-      setPage(0);
-      setNotes([]);
-      fetchNotes(0);
-    }
+    if (activeNotebook) { setPage(0); setNotes([]); fetchNotes(0); }
   }, [activeNotebook, fetchNotes]);
 
   // Infinite scroll
@@ -126,17 +151,12 @@ export default function Index() {
     return () => observer.disconnect();
   }, [hasMore, loading, loadingMore, page, fetchNotes]);
 
-  // Ctrl+N for new cell
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "n") {
-        e.preventDefault();
-        if (activeNotebook) openNewAt(0);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [activeNotebook]);
+  const filteredNotes = notes.filter(
+    (n) =>
+      n.title.toLowerCase().includes(search.toLowerCase()) ||
+      n.description?.toLowerCase().includes(search.toLowerCase()) ||
+      n.aiTags?.some((t) => t.toLowerCase().includes(search.toLowerCase()))
+  );
 
   const getBeforeAfterIds = () => {
     if (editorPosition === null) return { beforeId: null, afterId: null };
@@ -158,11 +178,7 @@ export default function Index() {
         toast.success("Cell updated");
       } else {
         const { beforeId, afterId } = getBeforeAfterIds();
-        await addNote({
-          entry: { ...data, notebookId: activeNotebook.id },
-          afterId,
-          beforeId,
-        });
+        await addNote({ entry: { ...data, notebookId: activeNotebook.id }, afterId, beforeId });
         toast.success("Cell added");
       }
       setEditorPosition(null);
@@ -177,7 +193,6 @@ export default function Index() {
   };
 
   const handleDelete = (id: number) => setDeleteTarget(id);
-
   const confirmDelete = async () => {
     if (deleteTarget === null) return;
     try {
@@ -185,48 +200,27 @@ export default function Index() {
       toast.success("Cell deleted");
       setPage(0);
       fetchNotes(0);
-    } catch {
-      toast.error("Failed to delete");
-    } finally {
-      setDeleteTarget(null);
-    }
+    } catch { toast.error("Failed to delete"); }
+    finally { setDeleteTarget(null); }
   };
 
   const handleEdit = (note: CodeNote) => {
     setEditing(note);
-    const idx = filteredNotes.findIndex((n) => n.id === note.id);
-    setEditorPosition(idx);
+    setEditorPosition(filteredNotes.findIndex((n) => n.id === note.id));
   };
 
-  const openNewAt = (position: number) => {
-    setEditing(null);
-    setEditorPosition(position);
-  };
-
-  const closeEditor = () => {
-    setEditorPosition(null);
-    setEditing(null);
-  };
-
-  const openPrImportAt = (position: number) => {
-    setPrImportPosition(position);
-  };
+  const openNewAt = (position: number) => { setEditing(null); setEditorPosition(position); };
+  const closeEditor = () => { setEditorPosition(null); setEditing(null); };
+  const openPrImportAt = (position: number) => setPrImportPosition(position);
 
   const handlePrImport = async (prLink: string) => {
     if (!activeNotebook) return;
     const pos = prImportPosition ?? 0;
     let afterId: number | null = null;
     let beforeId: number | null = null;
-    if (pos === 0) {
-      beforeId = null;
-      afterId = filteredNotes[0]?.id ?? null;
-    } else if (pos >= filteredNotes.length) {
-      beforeId = filteredNotes[filteredNotes.length - 1]?.id ?? null;
-      afterId = null;
-    } else {
-      beforeId = filteredNotes[pos - 1]?.id ?? null;
-      afterId = filteredNotes[pos]?.id ?? null;
-    }
+    if (pos === 0) { afterId = filteredNotes[0]?.id ?? null; }
+    else if (pos >= filteredNotes.length) { beforeId = filteredNotes[filteredNotes.length - 1]?.id ?? null; }
+    else { beforeId = filteredNotes[pos - 1]?.id ?? null; afterId = filteredNotes[pos]?.id ?? null; }
     await addPrNotesByPosition({ prLink, notebookId: activeNotebook.id, afterId, beforeId });
     toast.success("PR notes imported");
     setPrImportPosition(null);
@@ -249,52 +243,60 @@ export default function Index() {
   const handleSelectNotebook = (nb: Notebook) => {
     closeEditor();
     setActiveNotebook(nb);
+    setMobileSidebar(false);
   };
-
-  const filteredNotes = notes.filter(
-    (n) =>
-      n.title.toLowerCase().includes(search.toLowerCase()) ||
-      n.description?.toLowerCase().includes(search.toLowerCase()) ||
-      n.aiTags?.some((t) => t.toLowerCase().includes(search.toLowerCase()))
-  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <AppHeader onNewNote={activeNotebook ? () => openNewAt(0) : undefined} />
+      <AppHeader
+        onNewNote={activeNotebook ? () => openNewAt(0) : undefined}
+        onToggleChat={() => setChatOpen((p) => !p)}
+        chatOpen={chatOpen}
+        onToggleSidebar={() => setMobileSidebar((p) => !p)}
+      />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Mobile sidebar overlay */}
+        {mobileSidebar && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            onClick={() => setMobileSidebar(false)}
+          />
+        )}
+
         {/* Sidebar */}
-        <NotebookSidebar
-          notebooks={notebooks}
-          activeId={activeNotebook?.id ?? null}
-          loading={notebooksLoading}
-          onSelect={handleSelectNotebook}
-          onAdd={handleAddNotebook}
-          onUpdate={handleUpdateNotebook}
-        />
+        <div className={`
+          ${mobileSidebar ? "translate-x-0" : "-translate-x-full"}
+          md:translate-x-0 transition-transform duration-200
+          fixed md:relative z-50 md:z-auto h-[calc(100vh-48px)] md:h-auto
+        `}>
+          <NotebookSidebar
+            notebooks={notebooks}
+            activeId={activeNotebook?.id ?? null}
+            loading={notebooksLoading}
+            onSelect={handleSelectNotebook}
+            onAdd={handleAddNotebook}
+            onUpdate={handleUpdateNotebook}
+          />
+        </div>
 
         {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Notebook title bar */}
           {activeNotebook && (
             <div className="border-b border-border shrink-0">
-              <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+              <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <BookOpen className="w-4 h-4 text-primary shrink-0" />
                   <span className="text-sm font-medium truncate">{activeNotebook.name}</span>
-                  {activeNotebook.description && (
-                    <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">
-                      — {activeNotebook.description}
-                    </span>
-                  )}
-                  <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
-                    {notes.length} cells
+                  <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono shrink-0">
+                    {notes.length}
                   </span>
                 </div>
-                <div className="relative w-60">
+                <div className="relative w-36 sm:w-60">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                   <Input
-                    placeholder="Search cells..."
+                    placeholder="Search..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-8 h-8 text-xs bg-muted/50 border-border rounded-md"
@@ -305,7 +307,7 @@ export default function Index() {
           )}
 
           <main className="flex-1 overflow-y-auto scrollbar-thin">
-            <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4">
               {!activeNotebook ? (
                 <div className="flex items-center justify-center py-20">
                   <div className="text-center space-y-3">
@@ -336,7 +338,7 @@ export default function Index() {
                       </div>
                       <p className="text-sm font-medium">Empty notebook</p>
                       <p className="text-xs text-muted-foreground">
-                        {search ? "No cells match your search" : "Click '+ Cell' or press Ctrl+N to add your first cell"}
+                        {search ? "No cells match your search" : "Click '+ Cell' or press Ctrl+N"}
                       </p>
                       {!search && (
                         <Button size="sm" variant="outline" onClick={() => openNewAt(0)} className="h-8 text-xs rounded-lg mt-2">
@@ -379,7 +381,7 @@ export default function Index() {
                   {loadingMore && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span className="text-xs">Loading more cells...</span>
+                      <span className="text-xs">Loading more...</span>
                     </div>
                   )}
                 </div>
@@ -388,14 +390,31 @@ export default function Index() {
               {activeNotebook && (
                 <div className="border-t border-border mt-6 pt-3 pb-6">
                   <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono">
-                    <span>CodePad Kernel • {activeNotebook.name}</span>
-                    <span>{filteredNotes.length} cells loaded{hasMore ? " • scroll for more" : ""}</span>
+                    <span>CodePad • {activeNotebook.name}</span>
+                    <span>{filteredNotes.length} cells{hasMore ? " • scroll for more" : ""}</span>
                   </div>
                 </div>
               )}
             </div>
           </main>
         </div>
+
+        {/* Chat panel */}
+        {chatOpen && (
+          <div className={`
+            fixed md:relative z-50 md:z-auto
+            inset-y-0 right-0 md:inset-auto
+            w-full sm:w-80 md:w-80 lg:w-96
+            h-[calc(100vh-48px)] md:h-auto
+            shrink-0
+          `}>
+            <ChatPanel
+              notebookId={activeNotebook?.id ?? null}
+              open={chatOpen}
+              onClose={() => setChatOpen(false)}
+            />
+          </div>
+        )}
       </div>
 
       <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
@@ -403,7 +422,7 @@ export default function Index() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this cell?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The cell and its contents will be permanently removed.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
