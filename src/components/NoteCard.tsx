@@ -69,7 +69,7 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
           </Tooltip>
         )}
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md hover:bg-muted" onClick={() => onEdit(note)}>
@@ -91,11 +91,11 @@ export function NoteCard({ note, index, onEdit, onDelete }: NoteCardProps) {
 
       {!collapsed && (
         <div className="flex">
-          <div className="w-16 border-r bg-muted/20 flex items-start justify-end pr-3 pt-6">
-            <span className="text-xs font-mono text-muted-foreground">[{index + 1}]:</span>
+          <div className="w-10 sm:w-16 border-r bg-muted/20 flex items-start justify-end pr-2 sm:pr-3 pt-4 sm:pt-6">
+            <span className="text-[10px] sm:text-xs font-mono text-muted-foreground">[{index + 1}]:</span>
           </div>
 
-          <div className="flex-1 px-6 py-6 space-y-5 min-w-0">
+          <div className="flex-1 px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5 min-w-0">
             <h3 className="text-lg font-semibold leading-snug">{note.title}</h3>
 
             {note.permanentLink && (
