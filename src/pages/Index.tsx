@@ -306,7 +306,7 @@ export default function Index() {
             </div>
           )}
 
-          <main className="flex-1 overflow-y-auto scrollbar-thin">
+          <main className="flex-1 overflow-y-auto scrollbar scrollbar-thin" style={{maxHeight:"calc( 100vh - 7rem)"}}>
             <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4">
               {!activeNotebook ? (
                 <div className="flex items-center justify-center py-20">

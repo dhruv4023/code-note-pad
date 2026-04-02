@@ -106,7 +106,7 @@ export function NotebookSidebar({
   }
 
   return (
-    <div className="w-64 border-r border-border bg-sidebar-background flex flex-col shrink-0">
+    <div className="w-64 border-r border-border bg-sidebar-background flex flex-col shrink-0" style={{height:"calc( 100vh - 3rem)"}}>
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-border">
         <div className="flex items-center gap-2">

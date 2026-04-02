@@ -65,7 +65,7 @@ export function ChatPanel({ notebookId, open, onClose }: ChatPanelProps) {
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: typeof answer === "string" ? answer : JSON.stringify(answer, null, 2),
+          content: typeof answer === "string" ? answer : JSON.stringify(answer[0], null, 2),
           timestamp: new Date(),
         },
       ]);
@@ -107,7 +107,7 @@ export function ChatPanel({ notebookId, open, onClose }: ChatPanelProps) {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1" style={{maxHeight: "calc(100vh - 11rem)", width:"20rem"}}>
         <div className="p-4 space-y-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
