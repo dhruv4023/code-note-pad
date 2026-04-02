@@ -223,3 +223,12 @@ export async function addPrNotesByPosition(payload: {
     body: JSON.stringify(payload),
   });
 }
+
+// ─── AI Chat ─────────────────────────────────────────────────────────────────
+
+export async function askNotebook(notebookId: number, query: string) {
+  return request<any>(`/notebook/ask/${notebookId}`, {
+    method: "POST",
+    body: JSON.stringify({ query }),
+  });
+}
